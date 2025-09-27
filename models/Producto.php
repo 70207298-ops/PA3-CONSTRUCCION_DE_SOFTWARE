@@ -78,7 +78,8 @@ class Producto extends Model
     public function listarPorLocal(int $id_local): array
     {
         $sql = "SELECT p.id_producto, p.nombre, p.sku, p.unidad,
-                       s.stock, m.nombre AS marca, c.nombre AS categoria
+                       p.precio_mayorista, CAST(s.stock AS SIGNED) AS stock, 
+                       m.nombre AS marca, c.nombre AS categoria
                 FROM stock_local s
                 JOIN producto p  ON p.id_producto = s.id_producto
                 JOIN marca m     ON p.id_marca = m.id_marca

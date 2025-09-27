@@ -108,6 +108,20 @@ class TransferenciaController extends Controller
         $this->render('transferencia/ver', compact('transf','det') + ['title'=>'Detalle de Transferencia']);
     }
 
+    public function procesar()
+    {
+        $this->checkAuth();
+        $id = (int)($_GET['id'] ?? 0);
+        try {
+            $Transfer = $this->model('Transferencia');
+            $Transfer->procesar($id); // Procesa la transferencia completa
+            $_SESSION['flash_success'] = 'Transferencia procesada correctamente. Stock actualizado.';
+        } catch (\Throwable $e) {
+            $_SESSION['flash_error'] = 'No se pudo procesar: ' . $e->getMessage();
+        }
+        header('Location: index.php?c=transferencia&a=ver&id='.$id); exit;
+    }
+
     public function enviar()
     {
         $this->checkAuth();

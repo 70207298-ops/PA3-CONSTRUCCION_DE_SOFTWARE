@@ -71,8 +71,8 @@ let prods = [];
 function optionList() {
   if (!prods.length) return '<option value="">-- No hay productos con stock --</option>';
   return '<option value="">-- Seleccione --</option>' + prods.map(p =>
-    `<option value="${p.id_producto}" data-stock="${p.stock}">
-       ${p.nombre} (SKU ${p.sku}) [Stock: ${p.stock}]
+    `<option value="${p.id_producto}" data-stock="${parseInt(p.stock) || 0}">
+       ${p.nombre} (SKU ${p.sku}) [Stock: ${parseInt(p.stock) || 0}]
      </option>`
   ).join('');
 }
@@ -104,7 +104,7 @@ function addItemT(){
   const qty = tr.querySelector('input[name="item_cantidad[]"]');
 
   sel.addEventListener('change', () => {
-    const st = parseFloat(sel.selectedOptions[0]?.dataset.stock || '0');
+    const st = parseInt(sel.selectedOptions[0]?.dataset.stock || '0');
     qty.max = st > 0 ? st : '';
     if (st > 0 && parseFloat(qty.value) > st) qty.value = st;
   });
@@ -132,19 +132,69 @@ async function cargarProductosPorLocal(idLocal) {
   }
 }
 
+// Variables globales para almacenar opciones originales
+let opcionesLocalesDestino = '';
+
+// Función para filtrar opciones de destino
+function filtrarLocalesDestino(idLocalOrigen) {
+  const selectDestino = document.getElementById('id_local_destino');
+  const valorActual = selectDestino.value;
+  
+  // Generar opciones filtradas excluyendo el local origen
+  let opcionesFiltradas = '<option value="">-- Seleccione --</option>';
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(opcionesLocalesDestino, 'text/html');
+  const opciones = doc.querySelectorAll('option');
+  
+  opciones.forEach(opt => {
+    if (opt.value !== '' && opt.value !== idLocalOrigen) {
+      opcionesFiltradas += opt.outerHTML;
+    }
+  });
+  
+  selectDestino.innerHTML = opcionesFiltradas;
+  
+  // Restaurar valor si sigue siendo válido
+  if (valorActual && valorActual !== idLocalOrigen) {
+    selectDestino.value = valorActual;
+  }
+}
+
 // Eventos
 document.getElementById('btnAdd').addEventListener('click', addItemT);
 
 document.getElementById('id_local_origen').addEventListener('change', (e) => {
   const origen = e.target.value;
-  const destino = document.getElementById('id_local_destino');
-  if (destino.value && destino.value === origen) destino.value = ''; // no permitir mismo local
+  
+  // Filtrar opciones de destino
+  filtrarLocalesDestino(origen);
+  
+  // Cargar productos para el local seleccionado
   cargarProductosPorLocal(origen);
 });
 
-// Si el select de origen ya viene con valor, cargar al iniciar
+document.getElementById('id_local_destino').addEventListener('change', (e) => {
+  const destino = e.target.value;
+  const origen = document.getElementById('id_local_origen').value;
+  
+  // Si se selecciona el mismo local que el origen, limpiar
+  if (destino && destino === origen) {
+    e.target.value = '';
+    alert('El local de destino debe ser diferente al local de origen');
+  }
+});
+
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
+  // Guardar las opciones originales del select destino
+  const selectDestino = document.getElementById('id_local_destino');
+  opcionesLocalesDestino = selectDestino.innerHTML;
+  
+  // Si el select de origen ya viene con valor, cargar
   const v = document.getElementById('id_local_origen')?.value;
-  if (v) cargarProductosPorLocal(v);
+  if (v) {
+    cargarProductosPorLocal(v);
+    filtrarLocalesDestino(v);
+  }
 });
 </script>

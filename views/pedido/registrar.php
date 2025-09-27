@@ -108,8 +108,8 @@ async function cargarCatalogoPorLocal() {
     .concat(catalogo.map(p =>
       `<option value="${p.id_producto}"
                data-precio="${p.precio_mayorista ?? 0}"
-               data-stock="${p.stock ?? 0}">
-         ${p.nombre} (SKU ${p.sku} · Stock: ${p.stock ?? 0})
+               data-stock="${parseInt(p.stock) || 0}">
+         ${p.nombre} (SKU ${p.sku} · Stock: ${parseInt(p.stock) || 0})
        </option>`
     )).join('');
 
@@ -172,16 +172,20 @@ function syncPrecioYLimite(sel){
   const $precio = tr.querySelector('[name="item_precio[]"]');
   const $cant   = tr.querySelector('[name="item_cantidad[]"]');
 
-  if (opt) {
+  if (opt && opt.value) {
     const precio = parseFloat(opt.dataset.precio || '0') || 0;
-    const stock  = parseFloat(opt.dataset.stock  || '0') || 0;
+    const stock  = parseInt(opt.dataset.stock || '0') || 0;
 
     // set precio por defecto
     $precio.value = precio.toFixed(2);
 
-    // limitar cantidad al stock
+    // limitar cantidad al stock (usar entero)
     $cant.max = stock > 0 ? stock : null;
     validarCantidad($cant);
+  } else {
+    // Si no hay selección, limpiar precio y quitar límite
+    $precio.value = '0.00';
+    $cant.max = null;
   }
   recalc();
 }
